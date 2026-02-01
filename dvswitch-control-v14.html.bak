@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DVSwitch Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff41;
+            --secondary: #ff6b35;
+            --bg-dark: #0a0e27;
+            --bg-panel: #141829;
+            --text-dim: #4a5568;
+            --glow: rgba(0, 255, 65, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--primary);
+            min-height: 100vh;
+            position: relative;
+            padding: 20px;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--primary) 1px, transparent 1px),
+                linear-gradient(90deg, var(--primary) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.05;
+            animation: gridScroll 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes gridScroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            text-align: center;
+            letter-spacing: 0.2em;
+            text-shadow: 0 0 20px var(--glow);
+            margin-bottom: 1rem;
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .info {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 2rem;
+            letter-spacing: 0.3em;
+        }
+        
+        .section {
+            background: var(--bg-panel);
+            border: 2px solid var(--primary);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+        
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .quick-tune {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        input[type="number"],
+        input[type="text"] {
+            flex: 1;
+            background: rgba(0, 255, 65, 0.05);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            padding: 0.8rem;
+            outline: none;
+        }
+        
+        input:focus {
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 10px var(--glow);
+        }
+        
+        button {
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.2), rgba(0, 255, 65, 0.1));
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.3), rgba(0, 255, 65, 0.15));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--glow);
+        }
+        
+        .tg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .tg-button {
+            background: rgba(0, 255, 65, 0.05);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            text-align: center;
+        }
+        
+        .tg-button:hover {
+            background: rgba(0, 255, 65, 0.15);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--glow);
+        }
+        
+        .tg-button.active {
+            background: rgba(255, 107, 53, 0.2);
+            border-color: var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .tg-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .tg-name {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 107, 53, 0.8);
+            border: 1px solid var(--secondary);
+            color: white;
+            width: 25px;
+            height: 25px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        
+        .tg-button:hover .delete-btn {
+            display: flex;
+        }
+        
+        .delete-btn:hover {
+            background: var(--secondary);
+        }
+        
+        .add-btn {
+            width: 100%;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 107, 53, 0.1));
+            border-color: var(--secondary);
+            color: var(--secondary);
+            margin-top: 1rem;
+        }
+        
+        .add-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.3), rgba(255, 107, 53, 0.15));
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+        }
+        
+        #log {
+            height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 255, 65, 0.03);
+            padding: 1rem;
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            font-size: 0.85rem;
+        }
+        
+        #log::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #log::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--bg-panel);
+            border: 2px solid var(--primary);
+            padding: 2rem;
+            min-width: 400px;
+            max-width: 90%;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.3);
+        }
+        
+        .modal-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 10px var(--glow);
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            color: var(--text-dim);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+        
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+        }
+        
+        .mode-button {
+            background: rgba(0, 255, 65, 0.05);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .mode-button:hover {
+            background: rgba(0, 255, 65, 0.15);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--glow);
+        }
+        
+        .mode-button.active {
+            background: var(--primary);
+            color: var(--bg-dark);
+            box-shadow: 0 0 30px var(--glow);
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .tg-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+            .modal { min-width: 300px; }
+            .mode-grid { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DVSWITCH</h1>
+        <p class="info">
+            <span id="callsign">Loading...</span> / <span id="node">---</span>
+        </p>
+        
+        <div class="section">
+            <div class="section-title">Quick Tune</div>
+            <div class="quick-tune">
+                <input type="number" id="quick-tg" placeholder="Enter TG Number" min="1" max="9999999">
+                <button onclick="quickTune()">TUNE</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Mode Selection</div>
+            <div class="mode-grid">
+                <button class="mode-button" onclick="switchMode('DMR')">DMR</button>
+                <button class="mode-button" onclick="switchMode('YSF')">YSF</button>
+                <button class="mode-button" onclick="switchMode('P25')">P25</button>
+                <button class="mode-button" onclick="switchMode('NXDN')">NXDN</button>
+                <button class="mode-button" onclick="switchMode('DSTAR')">D-STAR</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Favorites</div>
+            <div class="tg-grid" id="favorites"></div>
+            <button class="add-btn" onclick="openAddModal()">+ ADD TO FAVORITES</button>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Activity Log</div>
+            <div id="log"></div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="overlay" onclick="closeAddModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">Add to Favorites</div>
+            <div class="form-group">
+                <label class="form-label">Talkgroup Number</label>
+                <input type="number" id="new-tg" placeholder="Enter TG number" min="1" max="9999999">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Name / Description</label>
+                <input type="text" id="new-name" placeholder="Enter name">
+            </div>
+            <div class="modal-buttons">
+                <button onclick="closeAddModal()">CANCEL</button>
+                <button onclick="addFavorite()">ADD FAVORITE</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let favorites = [];
+        
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML = `[${time}] ${msg}<br>` + logDiv.innerHTML;
+        }
+        
+        async function loadFavorites() {
+            try {
+                const response = await fetch('/cgi-bin/dvswitch-control.sh?action=get_favorites');
+                const data = await response.json();
+                
+                if (data.callsign) {
+                    document.getElementById('callsign').textContent = data.callsign;
+                    document.getElementById('node').textContent = data.node;
+                }
+                
+                if (data.favorites) {
+                    favorites = data.favorites;
+                    renderFavorites();
+                }
+                
+                // Highlight current mode
+                if (data.mode) {
+                    highlightMode(data.mode);
+                }
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        function highlightMode(mode) {
+            document.querySelectorAll('.mode-button').forEach(btn => {
+                const btnText = btn.textContent.trim();
+                // Handle D-STAR vs DSTAR
+                if (btnText === mode || (btnText === 'D-STAR' && mode === 'DSTAR') || (btnText === 'DSTAR' && mode === 'D-STAR')) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        function renderFavorites() {
+            const div = document.getElementById('favorites');
+            div.innerHTML = '';
+            
+            favorites.forEach(fav => {
+                const btn = document.createElement('div');
+                btn.className = 'tg-button';
+                btn.innerHTML = `
+                    <div class="tg-number">${fav.tg}</div>
+                    <div class="tg-name">${fav.name}</div>
+                    <div class="delete-btn" onclick="deleteFavorite(${fav.tg}); event.stopPropagation();">×</div>
+                `;
+                btn.onclick = () => tuneTG(fav.tg, fav.name);
+                div.appendChild(btn);
+            });
+        }
+        
+        async function tuneTG(tg, name) {
+            try {
+                const response = await fetch('/cgi-bin/dvswitch-control.sh', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `cmd=/opt/MMDVM_Bridge/dvswitch.sh tune ${tg}`
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    log(`Tuned to TG ${tg} (${name})`);
+                }
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        async function quickTune() {
+            const tg = document.getElementById('quick-tg').value;
+            if (!tg) return;
+            await tuneTG(tg, 'Quick Tune');
+            document.getElementById('quick-tg').value = '';
+        }
+        
+        async function switchMode(mode) {
+            try {
+                const response = await fetch('/cgi-bin/dvswitch-control.sh', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `cmd=/opt/MMDVM_Bridge/dvswitch.sh mode ${mode}`
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    log(`Switched to ${mode} mode`);
+                    highlightMode(mode);
+                } else {
+                    log(`ERROR: Failed to switch to ${mode}`);
+                }
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        function openAddModal() {
+            document.getElementById('overlay').classList.add('active');
+        }
+        
+        function closeAddModal() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('new-tg').value = '';
+            document.getElementById('new-name').value = '';
+        }
+        
+        async function addFavorite() {
+            const tg = document.getElementById('new-tg').value;
+            const name = document.getElementById('new-name').value;
+            
+            if (!tg || !name) {
+                log('ERROR: Enter both TG and name');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/cgi-bin/dvswitch-control.sh', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `action=add_favorite&tg=${tg}&name=${encodeURIComponent(name)}`
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    log(`Added TG ${tg} (${name})`);
+                    closeAddModal();
+                    await loadFavorites();
+                } else {
+                    log(`ERROR: ${data.message}`);
+                }
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        async function deleteFavorite(tg) {
+            if (!confirm(`Delete TG ${tg}?`)) return;
+            
+            try {
+                const response = await fetch('/cgi-bin/dvswitch-control.sh', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `action=delete_favorite&tg=${tg}`
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    log(`Deleted TG ${tg}`);
+                    await loadFavorites();
+                } else {
+                    log(`ERROR: ${data.message}`);
+                }
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        // Initialize
+        loadFavorites();
+        setInterval(loadFavorites, 5000);
+        
+        // Enter key support
+        document.getElementById('quick-tg').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') quickTune();
+        });
+    </script>
+</body>
+</html>
