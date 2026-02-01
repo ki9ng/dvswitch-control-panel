@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [1.6.0] - 2026-01-25
+
+### Added
+- Debian Trixie (13) support
+- Automatic Debian version detection
+- Apache2 auto-installation if missing
+- Better error handling with specific failure messages
+- Apache configuration validation before restart
+- Improved uninstaller with better cleanup and verification
+
+### Changed
+- Improved CGI module detection (handles both mod_cgi and mod_cgid)
+- Enhanced prerequisite checking
+- Better color-coded progress indicators
+- More informative success/failure messages
+- Uninstaller now backs up Apache config before modifications
+
+### Fixed
+- Compatibility issues with Debian Trixie
+- Apache configuration detection on different setups
+- Error handling for missing optional components
+- Uninstaller Apache config cleanup issues
+
 ## [1.5.1] - 2026-01-26
 
 ### Added

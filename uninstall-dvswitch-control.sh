@@ -1,133 +1,149 @@
 #!/bin/bash
 ###############################################################################
-# DVSwitch Control Panel Uninstaller
-# Removes the web-based control interface for DVSwitch Server
+# DVSwitch Control Panel Uninstaller v1.6
+# Removes DVSwitch Control Panel from ASL3
 # Author: KI9NG
 # License: MIT
+# Supports: Debian 12 (Bookworm) and Debian 13 (Trixie)
 ###############################################################################
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+BLUE='\033[0;34m'
+NC='\033[0m'
 
 echo -e "${RED}"
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║                                                           ║"
-echo "║        DVSwitch Control Panel Uninstaller                ║"
+echo "║        DVSwitch Control Panel Uninstaller                 ║"
+echo "║                    Version 1.6                            ║"
 echo "║                                                           ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then 
+if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}Please run as root (use sudo)${NC}"
     exit 1
 fi
 
-echo -e "${YELLOW}This will remove the DVSwitch Control Panel from your system.${NC}"
-echo -e "${YELLOW}Your DVSwitch configuration and favorites will NOT be removed.${NC}"
-echo ""
-read -p "Are you sure you want to continue? (yes/no): " CONFIRM
+# Detect system
+if [ -f /etc/debian_version ]; then
+    DEBIAN_VERSION=$(cat /etc/debian_version)
+    DEBIAN_CODENAME=$(lsb_release -cs 2>/dev/null || grep VERSION_CODENAME /etc/os-release | cut -d= -f2)
+    echo -e "${BLUE}System: Debian ${DEBIAN_VERSION} (${DEBIAN_CODENAME})${NC}"
+    echo ""
+fi
 
-if [ "$CONFIRM" != "yes" ]; then
-    echo "Uninstall cancelled."
+echo -e "${YELLOW}This will remove the DVSwitch Control Panel from your system.${NC}"
+echo -e "${YELLOW}Files and configurations will be removed.${NC}"
+echo ""
+read -p "Are you sure you want to continue? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${GREEN}Uninstall cancelled.${NC}"
     exit 0
 fi
 
 echo ""
-echo -e "${YELLOW}[1/6] Stopping Apache...${NC}"
-systemctl stop apache2
-echo -e "${GREEN}✓ Apache stopped${NC}"
-
-echo -e "${YELLOW}[2/6] Removing HTML file...${NC}"
+echo -e "${YELLOW}[1/6] Removing HTML control panel...${NC}"
 if [ -f "/var/www/html/dvswitch-control.html" ]; then
-    rm /var/www/html/dvswitch-control.html
-    echo -e "${GREEN}✓ Removed /var/www/html/dvswitch-control.html${NC}"
+    rm -f /var/www/html/dvswitch-control.html
+    echo -e "${GREEN}✓ HTML control panel removed${NC}"
 else
-    echo -e "${YELLOW}HTML file not found (already removed)${NC}"
+    echo -e "${BLUE}ℹ HTML control panel not found (already removed)${NC}"
 fi
 
-# Remove backups
-rm -f /var/www/html/dvswitch-control.html.backup-* 2>/dev/null
-
-echo -e "${YELLOW}[3/6] Removing CGI script...${NC}"
+echo -e "${YELLOW}[2/6] Removing CGI control script...${NC}"
 if [ -f "/var/www/cgi-bin/dvswitch-control.sh" ]; then
-    rm /var/www/cgi-bin/dvswitch-control.sh
-    echo -e "${GREEN}✓ Removed /var/www/cgi-bin/dvswitch-control.sh${NC}"
+    rm -f /var/www/cgi-bin/dvswitch-control.sh
+    echo -e "${GREEN}✓ CGI control script removed${NC}"
 else
-    echo -e "${YELLOW}CGI script not found (already removed)${NC}"
+    echo -e "${BLUE}ℹ CGI control script not found (already removed)${NC}"
 fi
 
-# Remove network switcher
+echo -e "${YELLOW}[3/6] Removing network switcher...${NC}"
 if [ -f "/usr/local/bin/dvswitch-network-switcher.sh" ]; then
-    rm /usr/local/bin/dvswitch-network-switcher.sh
-    echo -e "${GREEN}✓ Removed network switcher${NC}"
+    rm -f /usr/local/bin/dvswitch-network-switcher.sh
+    echo -e "${GREEN}✓ Network switcher removed${NC}"
+else
+    echo -e "${BLUE}ℹ Network switcher not found (already removed)${NC}"
 fi
 
-# Remove sudoers configuration
+echo -e "${YELLOW}[4/6] Removing sudo configuration...${NC}"
 if [ -f "/etc/sudoers.d/dvswitch-control" ]; then
-    sudo rm /etc/sudoers.d/dvswitch-control
-    echo -e "${GREEN}✓ Removed sudoers configuration${NC}"
+    rm -f /etc/sudoers.d/dvswitch-control
+    echo -e "${GREEN}✓ Sudo configuration removed${NC}"
+else
+    echo -e "${BLUE}ℹ Sudo configuration not found (already removed)${NC}"
 fi
 
-# Remove backups
-rm -f /var/www/cgi-bin/dvswitch-control.sh.backup-* 2>/dev/null
+echo -e "${YELLOW}[5/6] Cleaning up Apache configuration...${NC}"
 
-# Remove CGI directory if empty
-if [ -d "/var/www/cgi-bin" ] && [ -z "$(ls -A /var/www/cgi-bin)" ]; then
-    rmdir /var/www/cgi-bin
-    echo -e "${GREEN}✓ Removed empty CGI directory${NC}"
-fi
-
-echo -e "${YELLOW}[4/6] Removing Apache CGI configuration...${NC}"
+# Detect Apache configuration file
+APACHE_CONF=""
 if [ -f "/etc/apache2/sites-enabled/000-default.conf" ]; then
-    if grep -q "DVSwitch Control Panel CGI" /etc/apache2/sites-enabled/000-default.conf; then
-        # Try to restore from backup first
-        LATEST_BACKUP=$(ls -t /etc/apache2/sites-enabled/000-default.conf.backup-* 2>/dev/null | head -1)
-        if [ -n "$LATEST_BACKUP" ]; then
-            cp "$LATEST_BACKUP" /etc/apache2/sites-enabled/000-default.conf
-            echo -e "${GREEN}✓ Restored Apache config from backup${NC}"
+    APACHE_CONF="/etc/apache2/sites-enabled/000-default.conf"
+elif [ -f "/etc/apache2/sites-available/000-default.conf" ]; then
+    APACHE_CONF="/etc/apache2/sites-available/000-default.conf"
+fi
+
+if [ -n "$APACHE_CONF" ] && grep -q "DVSwitch Control Panel CGI" "$APACHE_CONF" 2>/dev/null; then
+    # Backup before modifying
+    cp "$APACHE_CONF" "${APACHE_CONF}.backup-before-uninstall-$(date +%Y%m%d-%H%M%S)"
+
+    # Remove the CGI configuration block
+    sed -i '/# DVSwitch Control Panel CGI/,/<\/Directory>/d' "$APACHE_CONF"
+
+    # Verify Apache configuration
+    if apache2ctl configtest 2>&1 | grep -q "Syntax OK"; then
+        echo -e "${GREEN}✓ Apache configuration cleaned up${NC}"
+
+        # Restart Apache
+        if systemctl restart apache2 2>/dev/null; then
+            echo -e "${GREEN}✓ Apache restarted${NC}"
         else
-            # Remove our configuration manually
-            # Create a backup first
-            cp /etc/apache2/sites-enabled/000-default.conf /etc/apache2/sites-enabled/000-default.conf.pre-uninstall-$(date +%Y%m%d-%H%M%S)
-            
-            # Remove the DVSwitch CGI section
-            sed -i '/# DVSwitch Control Panel CGI/,/<\/Directory>/d' /etc/apache2/sites-enabled/000-default.conf
-            echo -e "${GREEN}✓ Removed CGI configuration from Apache${NC}"
+            echo -e "${YELLOW}⚠ Apache restart had issues, but configuration is valid${NC}"
         fi
     else
-        echo -e "${YELLOW}Apache CGI configuration not found (already removed)${NC}"
+        echo -e "${RED}⚠ Apache configuration error - restoring backup${NC}"
+        cp "${APACHE_CONF}.backup-before-uninstall-$(date +%Y%m%d-%H%M%S)" "$APACHE_CONF"
     fi
+else
+    echo -e "${BLUE}ℹ No Apache configuration changes needed${NC}"
 fi
 
-echo -e "${YELLOW}[5/6] Starting Apache...${NC}"
-systemctl start apache2
-echo -e "${GREEN}✓ Apache started${NC}"
+echo -e "${YELLOW}[6/6] Verifying removal...${NC}"
 
-echo -e "${YELLOW}[6/6] Cleaning up...${NC}"
-# Remove any temporary files
-rm -f /tmp/dvswitch-control*.sh 2>/dev/null
-rm -f /tmp/install-dvswitch-control.sh 2>/dev/null
-echo -e "${GREEN}✓ Cleanup complete${NC}"
+ERRORS=0
+
+if [ -f "/var/www/html/dvswitch-control.html" ]; then
+    echo -e "${RED}✗ HTML file still exists${NC}"
+    ((ERRORS++))
+fi
+
+if [ -f "/var/www/cgi-bin/dvswitch-control.sh" ]; then
+    echo -e "${RED}✗ CGI script still exists${NC}"
+    ((ERRORS++))
+fi
+
+if [ -f "/usr/local/bin/dvswitch-network-switcher.sh" ]; then
+    echo -e "${RED}✗ Network switcher still exists${NC}"
+    ((ERRORS++))
+fi
+
+if [ $ERRORS -eq 0 ]; then
+    echo -e "${GREEN}✓ All components successfully removed${NC}"
+else
+    echo -e "${YELLOW}⚠ Some components may still exist${NC}"
+fi
 
 echo ""
 echo -e "${GREEN}════════════════════════════════════════════════════════════${NC}"
 echo -e "${GREEN}Uninstall Complete!${NC}"
 echo -e "${GREEN}════════════════════════════════════════════════════════════${NC}"
 echo ""
-echo -e "The following were ${RED}REMOVED${NC}:"
-echo -e "  - /var/www/html/dvswitch-control.html"
-echo -e "  - /var/www/cgi-bin/dvswitch-control.sh"
-echo -e "  - Apache CGI configuration"
+echo -e "${BLUE}Note: Favorites and DVSwitch configuration were preserved.${NC}"
+echo -e "${BLUE}Apache backup files were created in /etc/apache2/sites-*${NC}"
 echo ""
-echo -e "The following were ${GREEN}PRESERVED${NC}:"
-echo -e "  - /var/lib/dvswitch/dvs/tgdb/DMR_fvrt_list.txt (your favorites)"
-echo -e "  - DVSwitch Server installation"
-echo -e "  - All DVSwitch configurations"
-echo -e "  - Apache backup files"
-echo ""
-echo -e "${YELLOW}Note: Backup files are in /etc/apache2/sites-enabled/ and /var/www/${NC}"
-echo ""
+echo "73!"

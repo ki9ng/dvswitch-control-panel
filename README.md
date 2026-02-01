@@ -37,6 +37,17 @@ http://YOUR_NODE_IP/dvswitch-control.html
 - Apache2 web server
 - Root/sudo access to your node
 
+## Compatibility
+
+Tested and supported on:
+
+* **Debian 12 (Bookworm)** - AllStarLink 3
+* **Debian 13 (Trixie)** - AllStarLink 3
+* Raspberry Pi 3B+, 4, 5
+* x86_64 systems running ASL3
+
+Works on any ASL3 installation with DVSwitch Server.
+
 ## Manual Installation
 
 If you prefer to download first:
@@ -250,13 +261,13 @@ Native mobile applications for DVSwitch control.
 - Not self-hostable - uses official apps
 
 **Our advantages:**
-- ✅ Simpler installation (one command)
-- ✅ Pure HTML/CSS/JS - no Node.js required
-- ✅ Web-based favorite management (add/delete via UI)
-- ✅ Quick Tune feature for instant TG changes
-- ✅ Works with standard Apache setup
-- ✅ Edit favorites directly or via web interface
-- ✅ Retro-styled, responsive design
+-  Simpler installation (one command)
+-  Pure HTML/CSS/JS - no Node.js required
+-  Web-based favorite management (add/delete via UI)
+-  Quick Tune feature for instant TG changes
+-  Works with standard Apache setup
+-  Edit favorites directly or via web interface
+-  Retro-styled, responsive design
 
 ## Contributing
 
