@@ -116,9 +116,9 @@ else
 fi
 
 echo -e "${YELLOW}[4/9] Downloading CGI control script...${NC}"
-if wget -q -O /var/www/cgi-bin/dvswitch-control.sh \
+if wget -q -O /usr/lib/cgi-bin/dvswitch-control.sh \
     https://raw.githubusercontent.com/ki9ng/dvswitch-control-panel/main/dvswitch-control.sh; then
-    chmod +x /var/www/cgi-bin/dvswitch-control.sh
+    chmod +x /usr/lib/cgi-bin/dvswitch-control.sh
     echo -e "${GREEN}✓ CGI control script installed${NC}"
 else
     echo -e "${RED}Failed to download CGI script. Check your internet connection.${NC}"
@@ -220,12 +220,12 @@ else
 fi
 
 echo -e "${YELLOW}[9/9] Testing installation...${NC}"
-if [ -f "/var/www/html/dvswitch-control.html" ] && [ -x "/var/www/cgi-bin/dvswitch-control.sh" ]; then
+if [ -f "/var/www/html/dvswitch-control.html" ] && [ -x "/usr/lib/cgi-bin/dvswitch-control.sh" ]; then
     echo -e "${GREEN}✓ Installation successful!${NC}"
 else
     echo -e "${RED}✗ Installation verification failed${NC}"
     [ ! -f "/var/www/html/dvswitch-control.html" ] && echo "  Missing: HTML file"
-    [ ! -x "/var/www/cgi-bin/dvswitch-control.sh" ] && echo "  Missing or not executable: CGI script"
+    [ ! -x "/usr/lib/cgi-bin/dvswitch-control.sh" ] && echo "  Missing or not executable: CGI script"
     exit 1
 fi
 
